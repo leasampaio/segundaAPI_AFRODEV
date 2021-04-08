@@ -1,4 +1,4 @@
-const ModeloTabelaAgendamento = require('../agendaentos/modelTabelaAgendamentos');
+const ModeloTabelaAgendamento = require('../agendamentos/TabelaAgendamentos');
 ModeloTabelaAgendamento.sync()
     .then(()=>{
         console.log('Tabela ciada com sucesso')

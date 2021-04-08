@@ -3,6 +3,7 @@
     "config": "^3.3.6",
     "express": "^4.17.1",
     "mysql": "github:mysqljs/mysql",
+    "mysql2": "^2.2.5",
     "sequelize": "^6.6.2"
   },
   "name": "segundaapi_afrodev",
