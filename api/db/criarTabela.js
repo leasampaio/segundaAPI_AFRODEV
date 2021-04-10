@@ -1,8 +1,9 @@
-const ModeloTabelaAgendamento = require('../agendamentos/TabelaAgendamentos');
+const ModeloTabelaAgendamento = require('../agendamentos/modelTabelaAgendamento');
+
 ModeloTabelaAgendamento.sync()
-    .then(()=>{
-        console.log('Tabela ciada com sucesso')
+    .then(()=> {
+        console.log('Tabela criada com sucesso')
     })
-    .catch(
+    .catch(() => {
         console.log('Erro, tabela não criada')
-    );
+    });

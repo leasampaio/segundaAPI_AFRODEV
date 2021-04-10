@@ -1,10 +1,18 @@
 const router = require('express').Router()
 const TabelaAgendamento = require('../../agendamentos/TabelaAgendamento');
 const Agendamento = require('../../agendamentos/Agendamento')
+const SerializadorAgendamento = require('../../Serializar').SerializarAgendamento;
 
 router.get('/agendamentos', async (req, resp) => {
-    const results = await TabelaAgendamento.listar()
-    resp.send(JSON.stringify(results));
+    
+        const results = await TabelaAgendamento.listar()
+        const serializador = new SerializadorAgendamento(
+            resp.getHeader('Content-Type'),['nome_servico', 'status']
+        );
+        agendamentos = serializador.transformar(results)
+        resp.status(200).send(agendamentos);
+    
+  
 });
 
 router.post('/agendamentos', async (req, resp) => {
@@ -41,6 +49,28 @@ router.delete('/agendamentos/:idAgendamento', async (req, resp) => {
             mensagem: error.message
         }))
     }
+});
+router.put('/agendamentos/:idAgendamento', async (req, resp)=>{
+    try{
+        
+        const id = req.params.idAgendamento;
+        const dadosBody = req.body;
+        const dados = Object.assign({}, dadosBody, {id: id})
+        const agendamento = new Agendamento(dados);
+        await agendamento.atualizar();
+        
+        resp.send(JSON.stringify({
+            mensagem:'Registro atualizado'
+            })
+        );
+
+
+    }
+    catch (error){
+        resp.send(JSON.stringify({
+            mensagem: error.message
+        }))
+        }
 });
 
 module.exports = router
