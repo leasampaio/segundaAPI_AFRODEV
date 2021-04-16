@@ -1,49 +1,110 @@
-const FormatoInvalido = require('./erros/Formatoinvalido');
+const FormatoInvalido = require('./errors/FormatoInvalido');
+const jsonxml = require('jsontoxml')
 
 class Serializar {
-    json (dados){
+    json(dados) {
         return JSON.stringify(dados)
-    }
-    transformar(dados){
-        if(this.contentType !== 'application/json'){
-            throw new FormatoInvalido(this.contentType);
-    
+    };
+
+    xml(dados){
+        if(Array.isArray(dados)){
+            dados = dados.map((item)=>{
+                return{
+                    [this.tag]: item
+                }
+            })
+            this.tag=this.tagList;
         }
-        return this.json(this.filtrar(dados));
+        return jsonxml({
+            [this.tag]:dados
+        })
     }
-    filtrarCampos (dados){
-        const camposFiltrados = {};
-        this.camposPermitidos.forEach(campo => {
-            if(dados.hasOwnProperty(campo)){
-                camposFiltrados[campo]= dados[campo];
-            }
+
+    transformar(dados) {
+        dados = this.filtrar(dados)
+        if(this.contentType ==='application/json'){
             
+            return this.json(
+                dados
+            )
+        }
+        
+        if(this.contentType ==='application/xml'){
+            
+            return this.xml(
+                dados
+            )
+        }
+       
+        throw new FormatoInvalido(this.contentType)
+
+        
+    };
+
+    filtrarCampos(dados) {
+        const camposFiltrados = {};
+        this.camposPermitidos.forEach((campo) => {
+            if(dados.hasOwnProperty(campo)) {
+                camposFiltrados[campo] = dados[campo];
+            }
         });
+
         return camposFiltrados;
-    }
-    filtrar(dados){
+    };
+
+    filtrar(dados) {
         let dadosFiltrados = this.filtrarCampos(dados);
 
-        if(Array.isArray(dados)){
-            dadosFiltrados = dados.map((dados)=>{
-                return this.filtrarCampos(dados);
-
-            })
+        if(Array.isArray(dados)) {
+            dadosFiltrados = dados.map((dado) => {
+                return this.filtrarCampos(dado);
+            });
         }
 
         return dadosFiltrados;
     }
 }
 
-class SerializarAgendamento extends Serializar{
-    constructor(contentType, camposPersonalizados){
+class SerializarAgendamento extends Serializar {
+    constructor(contentType, camposPersonalizados) {
         super()
         this.contentType = contentType;
-        this.camposPermitidos = ['id', 'nome_cliente', 'data_agendamento'].concat(camposPersonalizados || [])
+        this.camposPermitidos = [
+            'id', 'nome_cliente', 'data_agendamento'
+        ].concat(camposPersonalizados || []);
+        this.tag = 'Agendamento'
+        this.tag = 'Agendamentos';
     }
 }
-module.exports ={
+
+class SerializarErro extends Serializar {
+    constructor(contentType, camposPersonalizados) {
+        super();
+        this.contentType = contentType;
+        this.camposPermitidos = [
+            'id', 'mensagem'
+        ].concat(camposPersonalizados || []);
+        this.tag = 'Error';
+        this.tagList = 'Erros'
+    }
+}
+class SerializarUsuario extends Serializar{
+    constructor(contentType, camposPersonalizados){
+        super();
+        this.contentType = contentType;
+        this.camposPermitidos =[
+            'id', 'email', 'senha'
+        ].concat (camposPersonalizados|| []);
+        this.tag = 'Usuario';
+        this.tagList = 'Usuarios'
+    }
+}
+
+
+module.exports = {
     Serializar: Serializar,
     SerializarAgendamento: SerializarAgendamento,
-    FormatosValidos : ['application/json']
+    SerializarError: SerializarErro,
+    SerializarUsuario,
+    FormatosValidos: ['application/json', 'application/xml']
 }

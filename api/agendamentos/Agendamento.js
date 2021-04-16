@@ -1,5 +1,7 @@
-
-const TabelaAgendamento = require('./TabelaAgendamento')
+const CampoInvalido = require('../errors/CampoInvalido');
+const TabelaAgendamento = require('./TabelaAgendamento');
+const DadosNaoInformados = require('../errors/DadosNaoInformados');
+const NaoEncontrado = require('../errors/NaoEncontrado');
 
 class Agendamento {
     constructor({id, nome_cliente, nome_servico, status, data_agendamento,
@@ -14,6 +16,7 @@ class Agendamento {
     }
 
     async criar(){
+        this.validar()
         const result = await TabelaAgendamento.adicionar({
             nome_cliente:  this.nome_cliente,
             nome_servico: this.nome_servico,
@@ -27,6 +30,9 @@ class Agendamento {
 
     async buscar() {
         const result = await TabelaAgendamento.buscarPorPK(this.id);
+        if(!result){
+            throw new NaoEncontrado('Agendamento');
+        }
         this.nome_servico = result.nome_servico;
         this.nome_cliente = result.nome_cliente;
         this.status = result.status;
@@ -34,24 +40,39 @@ class Agendamento {
         this.data_criação = result.data_criacao;
         this.data_atualizacao = result.data_atualizacao;
     }
-
     async remover() {
         await TabelaAgendamento.remover(this.id)
     }
-    async atualizar(){
-        await TabelaAgendamento.buscarPorPK(this.id)
-        const camposAtualizaveis = ['nome_cliente','nome_servico','status','data_agendamento']
+
+    async atualizar() {
+        this.validar()
+        await TabelaAgendamento.buscarPorPK(this.id);
+        const camposAtualizaveis = ['nome_cliente', 'nome_servico', 'status', 'data_agendamento']
         const dadosAtualizar = {}
-        camposAtualizaveis.forEach((campo)=>{
-            const valor = this [campo];
-            if(typeof valor === 'string' && valor.length>0){
-                dadosAtualizar[campo]= valor;
+
+        camposAtualizaveis.forEach((campo) => {
+            const valor = this[campo];
+            if(typeof valor === 'string' && valor.length > 0) {
+                dadosAtualizar[campo] = valor
             }
-        })
-        await TabelaAgendamento.atualizar(this.id, dadosAtualizar )
-        
+        });
 
+        if(Object.keys(dadosAtualizar).length === 0) {
+            throw new DadosNaoInformados()
+        }
 
+        await TabelaAgendamento.atualizar(this.id, dadosAtualizar);
+    }
+    
+    validar() {
+        const camposObrigatorios = ['nome_cliente', 'nome_servico', 'status', 'data_agendamento']
+
+        camposObrigatorios.forEach((campo) => {
+            const valor = this[campo];
+            if(typeof valor !== 'string' || valor.length === 0) {
+               throw new CampoInvalido(campo)
+            }
+        });
     }
 }
 module.exports = Agendamento;
